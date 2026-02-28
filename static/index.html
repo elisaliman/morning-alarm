@@ -8,6 +8,8 @@
   <style>
     body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(145deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      background-attachment: fixed;
     }
     @keyframes pulse-ring {
       0% { transform: scale(0.95); opacity: 0.7; }
@@ -17,6 +19,23 @@
     .pulse-ring {
       animation: pulse-ring 3s ease-in-out infinite;
     }
+    @keyframes pulse-ring-active {
+      0% { transform: scale(0.93); opacity: 0.8; }
+      50% { transform: scale(1.08); opacity: 0.3; }
+      100% { transform: scale(0.93); opacity: 0.8; }
+    }
+    .pulse-ring-active {
+      animation: pulse-ring-active 2s ease-in-out infinite;
+      background: rgba(99, 102, 241, 0.18) !important;
+    }
+    @keyframes pulse-confirm {
+      0% { box-shadow: 0 0 20px 4px rgba(99, 102, 241, 0.3); }
+      50% { box-shadow: 0 0 35px 10px rgba(99, 102, 241, 0.55); }
+      100% { box-shadow: 0 0 20px 4px rgba(99, 102, 241, 0.3); }
+    }
+    .orb-confirm {
+      animation: pulse-confirm 1.8s ease-in-out infinite;
+    }
     @keyframes fade-in-up {
       from { opacity: 0; transform: translateY(12px); }
       to { opacity: 1; transform: translateY(0); }
@@ -24,9 +43,124 @@
     .fade-in-up {
       animation: fade-in-up 0.5s ease-out forwards;
     }
+
+    /* Morphing gradient orb */
+    .orb-gradient {
+      position: relative;
+      overflow: hidden;
+      background: #1e1b4b;
+      border-radius: 50%;
+      isolation: isolate;
+      -webkit-mask-image: radial-gradient(circle, black 69%, transparent 70%);
+      mask-image: radial-gradient(circle, black 69%, transparent 70%);
+      will-change: transform;
+      transform: translateZ(0);
+    }
+    .orb-gradient::before,
+    .orb-gradient::after {
+      content: '';
+      position: absolute;
+      inset: -25%;
+      border-radius: 50%;
+      filter: blur(20px);
+      opacity: 0.95;
+    }
+    .orb-gradient::before {
+      background: radial-gradient(circle, #7c5cfc 0%, transparent 58%);
+      animation: morph-a 6s ease-in-out infinite alternate;
+    }
+    .orb-gradient::after {
+      background: radial-gradient(circle, #b44dff 0%, transparent 58%);
+      animation: morph-b 7s ease-in-out infinite alternate;
+    }
+    .orb-gradient-inner {
+      position: absolute;
+      inset: -25%;
+      border-radius: 50%;
+      filter: blur(18px);
+      opacity: 0.9;
+      background: radial-gradient(circle, #4f46e5 0%, transparent 55%);
+      animation: morph-c 5s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+    @keyframes morph-a {
+      0%   { transform: translate(-15%, -10%) scale(1); }
+      33%  { transform: translate(20%, -15%) scale(1.15); }
+      66%  { transform: translate(10%, 20%) scale(0.9); }
+      100% { transform: translate(-10%, 15%) scale(1.05); }
+    }
+    @keyframes morph-b {
+      0%   { transform: translate(15%, 10%) scale(1.1); }
+      33%  { transform: translate(-20%, 15%) scale(0.85); }
+      66%  { transform: translate(-5%, -20%) scale(1.1); }
+      100% { transform: translate(18%, -8%) scale(0.95); }
+    }
+    @keyframes morph-c {
+      0%   { transform: translate(5%, -18%) scale(0.9); }
+      33%  { transform: translate(-12%, 10%) scale(1.15); }
+      66%  { transform: translate(15%, 5%) scale(1); }
+      100% { transform: translate(-8%, -12%) scale(1.1); }
+    }
+
+    /* Scroll drum picker */
+    .drum-col {
+      position: relative;
+      height: 180px;
+      overflow: hidden;
+      -webkit-mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(0,0,0,0.3) 20%,
+        black 40%,
+        black 60%,
+        rgba(0,0,0,0.3) 80%,
+        transparent 100%
+      );
+      mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(0,0,0,0.3) 20%,
+        black 40%,
+        black 60%,
+        rgba(0,0,0,0.3) 80%,
+        transparent 100%
+      );
+    }
+    .drum-scroll {
+      overflow-y: scroll;
+      height: 100%;
+      scroll-snap-type: y mandatory;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .drum-scroll::-webkit-scrollbar { display: none; }
+    .drum-item {
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      scroll-snap-align: center;
+      font-size: 1.25rem;
+      font-weight: 300;
+      color: rgba(255,255,255,0.8);
+      transition: opacity 0.15s;
+      user-select: none;
+      cursor: default;
+    }
+    .drum-highlight {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 36px;
+      transform: translateY(-50%);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      pointer-events: none;
+    }
   </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center">
+<body class="min-h-screen flex items-center justify-center">
 
   <!-- Settings gear -->
   <button onclick="openSettings()" class="absolute top-5 right-5 text-white/30 hover:text-white/70 transition-colors cursor-pointer">
@@ -62,7 +196,7 @@
       </div>
 
       <!-- Google Calendar -->
-      <div>
+      <div class="mb-8">
         <p class="text-indigo-300/50 text-xs uppercase tracking-widest mb-3">Google Calendar</p>
         <div class="bg-white/5 border border-white/10 rounded-lg p-4">
           <div id="google-status" class="text-white/60 text-sm mb-3">Loading...</div>
@@ -76,25 +210,66 @@
           </div>
         </div>
       </div>
+
+      <!-- Cache -->
+      <div>
+        <p class="text-indigo-300/50 text-xs uppercase tracking-widest mb-3">Cache</p>
+        <div class="flex items-center justify-between">
+          <p class="text-white/40 text-sm">Today's script is cached after the first generation.</p>
+          <button onclick="clearCache()" class="ml-4 shrink-0 bg-white/5 hover:bg-white/10 text-white/50 hover:text-white/70 text-sm px-4 py-2 rounded-lg transition-colors cursor-pointer">
+            Clear
+          </button>
+        </div>
+        <p id="cache-status" class="text-xs text-indigo-300/40 h-4 mt-2"></p>
+      </div>
     </div>
   </div>
 
   <!-- Main content -->
   <div class="text-center px-6 max-w-lg">
-    <p class="text-indigo-300/70 text-sm uppercase tracking-[0.3em] mb-3">Good morning</p>
-    <h1 class="text-4xl sm:text-5xl font-light text-white/90 mb-2">Morning Alarm</h1>
-    <p class="text-indigo-300/50 text-sm mb-16">A calm start to your day</p>
+    <div id="clock" class="text-6xl sm:text-7xl font-extralight text-white/90 tabular-nums mb-2"></div>
+    <p id="greeting" class="text-indigo-300/60 text-sm mb-12"></p>
 
-    <div class="relative inline-block mb-16">
-      <div class="absolute inset-0 w-44 h-44 -m-4 rounded-full bg-indigo-500/10 pulse-ring"></div>
+    <!-- Orb -->
+    <div class="relative inline-block mb-6">
+      <div id="pulse-ring" class="absolute inset-0 w-44 h-44 -m-4 rounded-full bg-indigo-500/10 pulse-ring"></div>
       <button
-        id="btn-wake"
-        onclick="handleWake()"
-        class="relative w-36 h-36 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-medium text-lg shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+        id="btn-orb"
+        onclick="handleOrbClick()"
+        class="orb-gradient relative w-36 h-36 rounded-full text-white font-medium shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center"
       >
-        Wake Me Up
+        <div class="orb-gradient-inner"></div>
+        <span id="orb-label" class="relative z-10 text-lg leading-tight drop-shadow-md">Set Alarm</span>
       </button>
     </div>
+
+    <!-- Scroll drum time picker -->
+    <div id="alarm-picker" class="hidden fade-in-up mb-2">
+      <div class="inline-flex items-center gap-1 bg-white/5 border border-white/10 rounded-2xl px-5 py-3">
+        <div class="drum-col w-14">
+          <div class="drum-highlight"></div>
+          <div id="drum-hour" class="drum-scroll"></div>
+        </div>
+        <span class="text-white/30 text-xl font-light select-none">:</span>
+        <div class="drum-col w-14">
+          <div class="drum-highlight"></div>
+          <div id="drum-min" class="drum-scroll"></div>
+        </div>
+        <div class="drum-col w-16">
+          <div class="drum-highlight"></div>
+          <div id="drum-ampm" class="drum-scroll"></div>
+        </div>
+      </div>
+    </div>
+    <button id="btn-cancel-picker" onclick="cancelAlarmPicker()" class="hidden text-white/25 hover:text-white/50 text-xs underline underline-offset-2 transition-colors cursor-pointer mb-6">cancel</button>
+
+    <!-- Countdown shown under orb when alarm is set -->
+    <p id="alarm-countdown" class="hidden text-indigo-300/50 text-sm mb-10"></p>
+
+    <!-- Instant play fallback -->
+    <button id="btn-play-now" onclick="handleWake()" class="hidden text-white/25 hover:text-white/50 text-xs underline underline-offset-2 transition-colors cursor-pointer mb-10">
+      or play now
+    </button>
 
     <div id="status" class="text-indigo-300/60 text-sm h-6 mb-8"></div>
 
