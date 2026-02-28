@@ -58,9 +58,9 @@ def fetch_todays_events() -> list[CalendarEvent]:
     creds = _get_credentials()
     service = build("calendar", "v3", credentials=creds)
 
-    now = datetime.datetime.now(datetime.timezone.utc)
-    start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
-    end_of_day = now.replace(hour=23, minute=59, second=59, microsecond=0).isoformat()
+    local_now = datetime.datetime.now().astimezone()
+    start_of_day = local_now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+    end_of_day = local_now.replace(hour=23, minute=59, second=59, microsecond=0).isoformat()
 
     result = (
         service.events()
