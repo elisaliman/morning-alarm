@@ -93,7 +93,7 @@ async def generate_script(
     user_msg = _build_user_message(weather, events)
 
     response = await client.aio.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-3-flash-preview",
         contents=f"{SYSTEM_PROMPT}\n\n{user_msg}",
         config=genai.types.GenerateContentConfig(
             temperature=0.9,

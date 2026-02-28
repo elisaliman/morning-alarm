@@ -22,6 +22,42 @@ let pickerOpen = false;
 let pregenPromise = null;
 let pregenResult = null;
 
+// --- localStorage helpers ---
+
+const LS_ALARM_KEY = "daybreak_alarm";
+const LS_PICKER_KEY = "daybreak_picker_time";
+
+function saveAlarmToStorage(targetMs, h, m) {
+  localStorage.setItem(LS_ALARM_KEY, JSON.stringify({ targetMs, h, m }));
+}
+
+function clearAlarmFromStorage() {
+  localStorage.removeItem(LS_ALARM_KEY);
+}
+
+function loadAlarmFromStorage() {
+  try {
+    const raw = localStorage.getItem(LS_ALARM_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function savePickerTime(h, m) {
+  localStorage.setItem(LS_PICKER_KEY, JSON.stringify({ h, m }));
+}
+
+function loadPickerTime() {
+  try {
+    const raw = localStorage.getItem(LS_PICKER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function clearAllLocalStorage() {
+  localStorage.removeItem(LS_ALARM_KEY);
+  localStorage.removeItem(LS_PICKER_KEY);
+}
+
 // ============================================================
 // Clock
 // ============================================================
@@ -44,6 +80,35 @@ updateClock();
 setInterval(updateClock, 10000);
 
 // ============================================================
+// Restore persisted alarm on page load
+// ============================================================
+
+function restoreAlarm() {
+  const saved = loadAlarmFromStorage();
+  if (!saved) return;
+
+  const remaining = saved.targetMs - Date.now();
+  if (remaining <= 0) {
+    clearAlarmFromStorage();
+    return;
+  }
+
+  alarmTargetMs = saved.targetMs;
+  alarmTimeout = setTimeout(() => fireAlarm(), remaining);
+
+  orb.classList.add("orb-active");
+  orbLabel.innerHTML = `<span class="text-sm opacity-70">${formatTime12(saved.h, saved.m)}</span><br><span class="text-xs opacity-50">tap to cancel</span>`;
+  pulseRing.classList.add("pulse-ring-active");
+  alarmCountdown.classList.remove("hidden");
+  updateCountdown();
+  countdownInterval = setInterval(updateCountdown, 1000);
+
+  pregenerate();
+}
+
+restoreAlarm();
+
+// ============================================================
 // Scroll-drum time picker
 // ============================================================
 
@@ -60,20 +125,24 @@ function _addDrumItem(container, text) {
 }
 
 function _attachSnap(container) {
-  let userScrolling = false;
+  let touching = false;
   let debounce = null;
 
-  container.addEventListener("pointerdown", () => { userScrolling = true; }, { passive: true });
-  container.addEventListener("pointerup", () => { userScrolling = false; }, { passive: true });
-  container.addEventListener("pointercancel", () => { userScrolling = false; }, { passive: true });
+  container.addEventListener("pointerdown", () => { touching = true; }, { passive: true });
+
+  function onRelease() {
+    if (!touching) return;
+    touching = false;
+    clearTimeout(debounce);
+    debounce = setTimeout(() => snapDrum(container), 100);
+  }
+  window.addEventListener("pointerup", onRelease, { passive: true });
+  window.addEventListener("pointercancel", onRelease, { passive: true });
 
   container.addEventListener("scroll", () => {
+    if (touching || container._snapping) return;
     clearTimeout(debounce);
-    if (container._snapping) return;
-    debounce = setTimeout(() => {
-      if (userScrolling) return;
-      snapDrum(container);
-    }, 120);
+    debounce = setTimeout(() => snapDrum(container), 400);
   }, { passive: true });
 }
 
@@ -143,9 +212,10 @@ const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"))
 const AMPMS = ["AM", "PM"];
 
 function initDrums() {
+  const saved = loadPickerTime();
   const now = new Date();
-  const h = now.getHours();
-  const m = now.getMinutes();
+  const h = saved ? saved.h : now.getHours();
+  const m = saved ? saved.m : now.getMinutes();
   const h12 = h % 12 || 12;
 
   buildDrum(document.getElementById("drum-hour"), HOURS, h12 - 1, true);
@@ -221,13 +291,15 @@ function handleOrbClick() {
 }
 
 function showAlarmPicker() {
-  initDrums();
   alarmPicker.classList.remove("hidden");
   btnCancelPicker.classList.remove("hidden");
   btnPlayNow.classList.remove("hidden");
+  scriptBox.classList.add("hidden");
+  status.textContent = "";
   pickerOpen = true;
   orbLabel.textContent = "Confirm";
   orb.classList.add("orb-confirm");
+  requestAnimationFrame(() => initDrums());
 }
 
 function cancelAlarmPicker() {
@@ -245,6 +317,9 @@ function confirmAlarm() {
 
   alarmTargetMs = target.getTime();
   alarmTimeout = setTimeout(() => fireAlarm(), alarmTargetMs - Date.now());
+
+  saveAlarmToStorage(alarmTargetMs, h, m);
+  savePickerTime(h, m);
 
   hidePickerUI();
   orb.classList.remove("orb-confirm");
@@ -286,6 +361,7 @@ function clearScheduledAlarm() {
   pregenPromise = null;
   pregenResult = null;
   isGenerating = false;
+  clearAlarmFromStorage();
 
   hidePickerUI();
   resetOrb();
@@ -349,6 +425,7 @@ async function fireAlarm() {
   countdownInterval = null;
   alarmTimeout = null;
   alarmTargetMs = null;
+  clearAlarmFromStorage();
   alarmCountdown.classList.add("hidden");
 
   orb.disabled = true;
@@ -554,7 +631,8 @@ async function clearCache() {
   const cacheStatus = document.getElementById("cache-status");
   try {
     await fetch("/api/cache/clear", { method: "POST" });
-    cacheStatus.textContent = "Cache cleared. Next alarm will generate fresh.";
+    clearAllLocalStorage();
+    cacheStatus.textContent = "Cache and local data cleared.";
     setTimeout(() => { cacheStatus.textContent = ""; }, 3000);
   } catch (err) {
     cacheStatus.textContent = `Error: ${err.message}`;
