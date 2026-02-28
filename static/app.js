@@ -67,9 +67,10 @@ async function loadSettings() {
     const data = await res.json();
 
     const loc = data.location || {};
-    document.getElementById("loc-name").value = loc.name || "";
-    document.getElementById("loc-lat").value = loc.lat || "";
-    document.getElementById("loc-lon").value = loc.lon || "";
+    document.getElementById("loc-current").textContent = loc.name
+      ? `Current: ${loc.name}`
+      : "Current: New York (default)";
+    document.getElementById("city-search").value = "";
 
     renderGoogleStatus(data.google || {});
   } catch (err) {
@@ -95,27 +96,67 @@ function renderGoogleStatus(google) {
   }
 }
 
-// --- Location ---
+// --- Location (city search) ---
 
-async function saveLocation() {
-  const lat = document.getElementById("loc-lat").value.trim();
-  const lon = document.getElementById("loc-lon").value.trim();
-  const name = document.getElementById("loc-name").value.trim();
-  const locStatus = document.getElementById("loc-status");
+let citySearchTimer = null;
 
-  if (!lat || !lon) {
-    locStatus.textContent = "Latitude and longitude are required.";
+function handleCitySearch() {
+  clearTimeout(citySearchTimer);
+  const q = document.getElementById("city-search").value.trim();
+  const resultsEl = document.getElementById("city-results");
+
+  if (q.length < 2) {
+    resultsEl.classList.add("hidden");
     return;
   }
+
+  citySearchTimer = setTimeout(() => searchCities(q), 300);
+}
+
+async function searchCities(q) {
+  const resultsEl = document.getElementById("city-results");
+  try {
+    const res = await fetch(`/api/cities?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    const cities = data.results || [];
+
+    if (cities.length === 0) {
+      resultsEl.innerHTML = `<div class="px-4 py-3 text-white/30 text-sm">No cities found</div>`;
+      resultsEl.classList.remove("hidden");
+      return;
+    }
+
+    resultsEl.innerHTML = cities.map((c, i) =>
+      `<button onclick='selectCity(${i})' class="w-full text-left px-4 py-2.5 text-white/70 text-sm hover:bg-white/10 transition-colors cursor-pointer">${c.label}</button>`
+    ).join("");
+    resultsEl.classList.remove("hidden");
+
+    window._cityResults = cities;
+  } catch (err) {
+    console.error("City search failed", err);
+  }
+}
+
+async function selectCity(index) {
+  const city = window._cityResults[index];
+  if (!city) return;
+
+  const resultsEl = document.getElementById("city-results");
+  const locStatus = document.getElementById("loc-status");
+  const searchInput = document.getElementById("city-search");
+
+  resultsEl.classList.add("hidden");
+  searchInput.value = "";
 
   try {
     const res = await fetch("/api/settings/location", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ lat, lon, name }),
+      body: JSON.stringify({ lat: city.lat, lon: city.lon, name: city.label }),
     });
     if (!res.ok) throw new Error("Save failed");
-    locStatus.textContent = "Location saved.";
+    document.getElementById("loc-current").textContent = `Current: ${city.label}`;
+    locStatus.textContent = "Location updated.";
     setTimeout(() => { locStatus.textContent = ""; }, 3000);
   } catch (err) {
     locStatus.textContent = `Error: ${err.message}`;

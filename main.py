@@ -4,6 +4,7 @@ import asyncio
 import json
 from pathlib import Path
 
+import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
@@ -48,6 +49,9 @@ def _save_settings(settings: dict) -> None:
 # --- API ---
 
 
+GEOCODE_URL = "https://geocoding-api.open-meteo.com/v1/search"
+
+
 class LocationUpdate(BaseModel):
     lat: str
     lon: str
@@ -57,6 +61,38 @@ class LocationUpdate(BaseModel):
 @app.get("/")
 async def index():
     return FileResponse(str(STATIC_DIR / "index.html"))
+
+
+@app.get("/api/cities")
+async def search_cities(q: str = ""):
+    """Proxy Open-Meteo geocoding to find cities by name."""
+    if len(q.strip()) < 2:
+        return {"results": []}
+    async with httpx.AsyncClient(timeout=5) as client:
+        resp = await client.get(GEOCODE_URL, params={
+            "name": q,
+            "count": 8,
+            "language": "en",
+            "format": "json",
+        })
+        resp.raise_for_status()
+        data = resp.json()
+
+    results = []
+    for r in data.get("results", []):
+        label = r.get("name", "")
+        admin = r.get("admin1", "")
+        country = r.get("country", "")
+        if admin:
+            label += f", {admin}"
+        if country:
+            label += f", {country}"
+        results.append({
+            "label": label,
+            "lat": str(r["latitude"]),
+            "lon": str(r["longitude"]),
+        })
+    return {"results": results}
 
 
 @app.get("/api/settings")

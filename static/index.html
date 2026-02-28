@@ -51,19 +51,13 @@
       <!-- Location -->
       <div class="mb-8">
         <p class="text-indigo-300/50 text-xs uppercase tracking-widest mb-3">Location</p>
-        <div class="space-y-3">
-          <input id="loc-name" type="text" placeholder="City name (optional)"
+        <div class="relative">
+          <div id="loc-current" class="text-white/60 text-sm mb-3">Loading...</div>
+          <input id="city-search" type="text" placeholder="Search for a city..."
+            oninput="handleCitySearch()"
             class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white/80 text-sm placeholder-white/20 focus:outline-none focus:border-indigo-500/50" />
-          <div class="grid grid-cols-2 gap-3">
-            <input id="loc-lat" type="text" placeholder="Latitude"
-              class="bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white/80 text-sm placeholder-white/20 focus:outline-none focus:border-indigo-500/50" />
-            <input id="loc-lon" type="text" placeholder="Longitude"
-              class="bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white/80 text-sm placeholder-white/20 focus:outline-none focus:border-indigo-500/50" />
-          </div>
-          <button onclick="saveLocation()" class="w-full bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-sm py-2 rounded-lg transition-colors cursor-pointer">
-            Save Location
-          </button>
-          <p id="loc-status" class="text-xs text-indigo-300/40 h-4"></p>
+          <div id="city-results" class="hidden absolute left-0 right-0 mt-1 bg-slate-800 border border-white/10 rounded-lg overflow-hidden z-10 max-h-56 overflow-y-auto"></div>
+          <p id="loc-status" class="text-xs text-indigo-300/40 h-4 mt-2"></p>
         </div>
       </div>
 
