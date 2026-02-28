@@ -53,6 +53,16 @@ def _get_credentials() -> Credentials:
     return creds
 
 
+def _get_user_email(creds: Credentials) -> str:
+    """Fetch the email address for the given credentials."""
+    try:
+        service = build("oauth2", "v2", credentials=creds)
+        user_info = service.userinfo().get().execute()
+        return user_info.get("email", "Unknown")
+    except Exception:
+        return "(could not fetch email)"
+
+
 def fetch_todays_events() -> list[CalendarEvent]:
     """Return today's calendar events (synchronous — Google client is not async)."""
     creds = _get_credentials()
@@ -104,9 +114,7 @@ def get_connected_account() -> dict:
         creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), SCOPES)
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
-        service = build("oauth2", "v2", credentials=creds)
-        user_info = service.userinfo().get().execute()
-        return {"connected": True, "email": user_info.get("email", "Unknown")}
+        return {"connected": True, "email": _get_user_email(creds)}
     except Exception:
         return {"connected": True, "email": "(saved but could not fetch email)"}
 
@@ -121,10 +129,4 @@ def reconnect_account() -> str:
     """Force a fresh OAuth flow and return the connected email."""
     disconnect_account()
     creds = _get_credentials()
-    TOKEN_FILE.write_text(creds.to_json())
-    try:
-        service = build("oauth2", "v2", credentials=creds)
-        user_info = service.userinfo().get().execute()
-        return user_info.get("email", "Unknown")
-    except Exception:
-        return "(connected but could not fetch email)"
+    return _get_user_email(creds)
