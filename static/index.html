@@ -12,21 +12,27 @@
       background: linear-gradient(145deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
       background-attachment: fixed;
     }
-    @keyframes pulse-ring {
-      0% { transform: scale(0.95); opacity: 0.7; }
-      50% { transform: scale(1.05); opacity: 0.4; }
-      100% { transform: scale(0.95); opacity: 0.7; }
+    @keyframes wobble-ring {
+      0%   { border-radius: 30% 70% 60% 40% / 55% 35% 65% 45%; transform: scale(0.96) rotate(0deg); opacity: 0.6; }
+      20%  { border-radius: 65% 35% 40% 60% / 35% 65% 45% 55%; transform: scale(1.04) rotate(5deg); opacity: 0.45; }
+      40%  { border-radius: 40% 60% 70% 30% / 60% 40% 35% 65%; transform: scale(1.08) rotate(-4deg); opacity: 0.35; }
+      60%  { border-radius: 70% 30% 35% 65% / 45% 55% 60% 40%; transform: scale(1.02) rotate(6deg); opacity: 0.5; }
+      80%  { border-radius: 35% 65% 55% 45% / 65% 35% 40% 60%; transform: scale(1.06) rotate(-3deg); opacity: 0.4; }
+      100% { border-radius: 30% 70% 60% 40% / 55% 35% 65% 45%; transform: scale(0.96) rotate(0deg); opacity: 0.6; }
     }
     .pulse-ring {
-      animation: pulse-ring 3s ease-in-out infinite;
+      animation: wobble-ring 7s ease-in-out infinite;
     }
-    @keyframes pulse-ring-active {
-      0% { transform: scale(0.93); opacity: 0.8; }
-      50% { transform: scale(1.08); opacity: 0.3; }
-      100% { transform: scale(0.93); opacity: 0.8; }
+    @keyframes wobble-ring-active {
+      0%   { border-radius: 28% 72% 62% 38% / 58% 32% 68% 42%; transform: scale(0.94) rotate(0deg); opacity: 0.7; }
+      20%  { border-radius: 68% 32% 38% 62% / 32% 68% 42% 58%; transform: scale(1.08) rotate(7deg); opacity: 0.5; }
+      40%  { border-radius: 38% 62% 72% 28% / 62% 38% 32% 68%; transform: scale(1.14) rotate(-5deg); opacity: 0.35; }
+      60%  { border-radius: 72% 28% 32% 68% / 42% 58% 62% 38%; transform: scale(1.04) rotate(8deg); opacity: 0.55; }
+      80%  { border-radius: 32% 68% 58% 42% / 68% 32% 38% 62%; transform: scale(1.10) rotate(-4deg); opacity: 0.4; }
+      100% { border-radius: 28% 72% 62% 38% / 58% 32% 68% 42%; transform: scale(0.94) rotate(0deg); opacity: 0.7; }
     }
     .pulse-ring-active {
-      animation: pulse-ring-active 2s ease-in-out infinite;
+      animation: wobble-ring-active 4s ease-in-out infinite;
       background: rgba(99, 102, 241, 0.18) !important;
     }
     @keyframes pulse-confirm {
@@ -101,6 +107,20 @@
       33%  { transform: translate(-12%, 10%) scale(1.15); }
       66%  { transform: translate(15%, 5%) scale(1); }
       100% { transform: translate(-8%, -12%) scale(1.1); }
+    }
+
+    /* Alarm-set state: faster morphing, brighter colors */
+    .orb-active::before {
+      background: radial-gradient(circle, #c026d3 0%, transparent 58%) !important;
+      animation: morph-a 3s ease-in-out infinite alternate !important;
+    }
+    .orb-active::after {
+      background: radial-gradient(circle, #e879f9 0%, transparent 58%) !important;
+      animation: morph-b 3.5s ease-in-out infinite alternate !important;
+    }
+    .orb-active .orb-gradient-inner {
+      background: radial-gradient(circle, #a21caf 0%, transparent 55%) !important;
+      animation: morph-c 2.5s ease-in-out infinite alternate !important;
     }
 
     /* Scroll drum picker */
@@ -233,7 +253,7 @@
 
     <!-- Orb -->
     <div class="relative inline-block mb-6">
-      <div id="pulse-ring" class="absolute inset-0 w-44 h-44 -m-4 rounded-full bg-indigo-500/10 pulse-ring"></div>
+      <div id="pulse-ring" class="absolute inset-0 w-44 h-44 -m-4 bg-indigo-500/10 pulse-ring"></div>
       <button
         id="btn-orb"
         onclick="handleOrbClick()"

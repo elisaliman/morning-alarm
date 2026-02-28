@@ -187,7 +187,7 @@ function hidePickerUI() {
 
 function resetOrb() {
   orb.disabled = false;
-  orb.classList.remove("orb-confirm");
+  orb.classList.remove("orb-confirm", "orb-active");
   orbLabel.textContent = "Set Alarm";
   pulseRing.classList.remove("pulse-ring-active");
 }
@@ -248,6 +248,7 @@ function confirmAlarm() {
 
   hidePickerUI();
   orb.classList.remove("orb-confirm");
+  orb.classList.add("orb-active");
 
   orbLabel.innerHTML = `<span class="text-sm opacity-70">${formatTime12(h, m)}</span><br><span class="text-xs opacity-50">tap to cancel</span>`;
   pulseRing.classList.add("pulse-ring-active");
@@ -349,9 +350,9 @@ async function fireAlarm() {
   alarmTimeout = null;
   alarmTargetMs = null;
   alarmCountdown.classList.add("hidden");
-  pulseRing.classList.remove("pulse-ring-active");
 
   orb.disabled = true;
+  orb.classList.add("orb-active");
   orbLabel.textContent = "Brewing\u2026";
   scriptBox.classList.add("hidden");
 
@@ -384,10 +385,10 @@ async function handleWake() {
   if (isGenerating) return;
   isGenerating = true;
   orb.disabled = true;
+  orb.classList.add("orb-active");
   orbLabel.textContent = "Brewing\u2026";
 
   hidePickerUI();
-  pulseRing.classList.remove("pulse-ring-active");
   status.textContent = "Fetching weather, calendar, and crafting your morning\u2026";
   scriptBox.classList.add("hidden");
 

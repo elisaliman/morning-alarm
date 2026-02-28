@@ -22,8 +22,8 @@ AUDIO_FORMAT = "mp3_44100_128"
 SFX_DURATION = 2.0
 INLINE_SFX_VOLUME_DB = -50
 MUSIC_PROMPT = "calm ambient spa music, soft piano and gentle pads, peaceful and meditative"
-MUSIC_TARGET_DBFS = -45
-WEATHER_AMBIENCE_TARGET_DBFS = -45
+MUSIC_TARGET_DBFS = -35
+WEATHER_AMBIENCE_TARGET_DBFS = -40
 
 _SPRING_BASE = "birds chirping softly in a garden, gentle morning breeze through leaves"
 
@@ -139,9 +139,20 @@ def _stitch(segments: list[Segment], audio_chunks: list[bytes]) -> AudioSegment:
 def _prepare_layer(raw: bytes, target_length: int, target_dbfs: float) -> AudioSegment:
     """Load an MP3, normalize to target dBFS, loop to fill target length, and fade."""
     layer = AudioSegment.from_mp3(io.BytesIO(raw))
-    logger.info("Layer raw: %dms, dBFS=%.1f", len(layer), layer.dBFS)
-    if layer.dBFS > -80:
-        layer = layer.apply_gain(target_dbfs - layer.dBFS)
+    logger.info("Layer raw: %dms, dBFS=%.1f, max_dBFS=%.1f", len(layer), layer.dBFS, layer.max_dBFS)
+
+    if layer.dBFS <= -80:
+        logger.warning("Layer is near-silent (dBFS=%.1f), skipping normalization", layer.dBFS)
+    else:
+        gain = target_dbfs - layer.dBFS
+        layer = layer.apply_gain(gain)
+
+        # Clamp peaks to prevent clipping from over-amplification
+        if layer.max_dBFS > 0:
+            layer = layer.apply_gain(-layer.max_dBFS)
+
+    logger.info("Layer post-norm: dBFS=%.1f, max_dBFS=%.1f", layer.dBFS, layer.max_dBFS)
+
     if len(layer) < target_length:
         loops_needed = (target_length // len(layer)) + 1
         layer = layer * loops_needed
@@ -205,6 +216,12 @@ async def generate_audio(script: str, weather_description: str = "") -> Path:
     )
 
     foreground = _stitch(segments, audio_chunks)
+
+    # Normalize foreground voice to a consistent level
+    FOREGROUND_TARGET_DBFS = -18
+    if foreground.dBFS > -80:
+        foreground = foreground.apply_gain(FOREGROUND_TARGET_DBFS - foreground.dBFS)
+
     combined = _mix_layers(foreground, music_bytes, ambience_bytes)
 
     filename = f"morning_{uuid.uuid4().hex[:8]}.mp3"
