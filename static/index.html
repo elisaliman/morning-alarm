@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Morning Alarm</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.7; }
+      50% { transform: scale(1.05); opacity: 0.4; }
+      100% { transform: scale(0.95); opacity: 0.7; }
+    }
+    .pulse-ring {
+      animation: pulse-ring 3s ease-in-out infinite;
+    }
+    @keyframes fade-in-up {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in-up {
+      animation: fade-in-up 0.5s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center">
+
+  <!-- Settings gear -->
+  <button onclick="openSettings()" class="absolute top-5 right-5 text-white/30 hover:text-white/70 transition-colors cursor-pointer">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+    </svg>
+  </button>
+
+  <!-- Settings modal -->
+  <div id="settings-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div class="bg-slate-900 border border-white/10 rounded-2xl p-8 w-full max-w-md mx-4 shadow-2xl">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-white/90 text-lg font-medium">Settings</h2>
+        <button onclick="closeSettings()" class="text-white/30 hover:text-white/70 transition-colors cursor-pointer">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Location -->
+      <div class="mb-8">
+        <p class="text-indigo-300/50 text-xs uppercase tracking-widest mb-3">Location</p>
+        <div class="space-y-3">
+          <input id="loc-name" type="text" placeholder="City name (optional)"
+            class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white/80 text-sm placeholder-white/20 focus:outline-none focus:border-indigo-500/50" />
+          <div class="grid grid-cols-2 gap-3">
+            <input id="loc-lat" type="text" placeholder="Latitude"
+              class="bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white/80 text-sm placeholder-white/20 focus:outline-none focus:border-indigo-500/50" />
+            <input id="loc-lon" type="text" placeholder="Longitude"
+              class="bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white/80 text-sm placeholder-white/20 focus:outline-none focus:border-indigo-500/50" />
+          </div>
+          <button onclick="saveLocation()" class="w-full bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-sm py-2 rounded-lg transition-colors cursor-pointer">
+            Save Location
+          </button>
+          <p id="loc-status" class="text-xs text-indigo-300/40 h-4"></p>
+        </div>
+      </div>
+
+      <!-- Google Calendar -->
+      <div>
+        <p class="text-indigo-300/50 text-xs uppercase tracking-widest mb-3">Google Calendar</p>
+        <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+          <div id="google-status" class="text-white/60 text-sm mb-3">Loading...</div>
+          <div class="flex gap-2">
+            <button id="btn-google-connect" onclick="googleConnect()" class="flex-1 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-sm py-2 rounded-lg transition-colors cursor-pointer">
+              Connect Account
+            </button>
+            <button id="btn-google-disconnect" onclick="googleDisconnect()" class="hidden flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-300/70 text-sm py-2 rounded-lg transition-colors cursor-pointer">
+              Disconnect
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="text-center px-6 max-w-lg">
+    <p class="text-indigo-300/70 text-sm uppercase tracking-[0.3em] mb-3">Good morning</p>
+    <h1 class="text-4xl sm:text-5xl font-light text-white/90 mb-2">Morning Alarm</h1>
+    <p class="text-indigo-300/50 text-sm mb-16">A calm start to your day</p>
+
+    <div class="relative inline-block mb-16">
+      <div class="absolute inset-0 w-44 h-44 -m-4 rounded-full bg-indigo-500/10 pulse-ring"></div>
+      <button
+        id="btn-wake"
+        onclick="handleWake()"
+        class="relative w-36 h-36 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-medium text-lg shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+      >
+        Wake Me Up
+      </button>
+    </div>
+
+    <div id="status" class="text-indigo-300/60 text-sm h-6 mb-8"></div>
+
+    <div id="script-box" class="hidden fade-in-up bg-white/5 backdrop-blur-sm rounded-2xl p-6 text-left border border-white/10">
+      <p class="text-indigo-300/50 text-xs uppercase tracking-widest mb-3">Today's Script</p>
+      <p id="script-text" class="text-white/80 text-sm leading-relaxed whitespace-pre-line"></p>
+    </div>
+
+    <audio id="player" class="hidden"></audio>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
