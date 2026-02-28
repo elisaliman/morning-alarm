@@ -21,6 +21,7 @@ let isGenerating = false;
 let pickerOpen = false;
 let pregenPromise = null;
 let pregenResult = null;
+let pregenDelayTimeout = null;
 
 // --- localStorage helpers ---
 
@@ -103,7 +104,7 @@ function restoreAlarm() {
   updateCountdown();
   countdownInterval = setInterval(updateCountdown, 1000);
 
-  pregenerate();
+  schedulePregeneration();
 }
 
 restoreAlarm();
@@ -331,7 +332,7 @@ function confirmAlarm() {
   updateCountdown();
   countdownInterval = setInterval(updateCountdown, 1000);
 
-  pregenerate();
+  schedulePregeneration();
 }
 
 function updateCountdown() {
@@ -355,8 +356,10 @@ function updateCountdown() {
 function clearScheduledAlarm() {
   if (alarmTimeout) clearTimeout(alarmTimeout);
   if (countdownInterval) clearInterval(countdownInterval);
+  if (pregenDelayTimeout) clearTimeout(pregenDelayTimeout);
   alarmTimeout = null;
   countdownInterval = null;
+  pregenDelayTimeout = null;
   alarmTargetMs = null;
   pregenPromise = null;
   pregenResult = null;
@@ -381,6 +384,29 @@ async function fetchMorning() {
     throw new Error(err.detail || `Server error ${res.status}`);
   }
   return res.json();
+}
+
+function schedulePregeneration() {
+  if (pregenDelayTimeout) clearTimeout(pregenDelayTimeout);
+
+  const now = new Date();
+  const alarmDate = new Date(alarmTargetMs);
+  const isToday = now.toDateString() === alarmDate.toDateString();
+
+  if (isToday) {
+    pregenerate();
+    return;
+  }
+
+  const midnight = new Date(alarmDate);
+  midnight.setHours(0, 0, 5, 0);
+  const delay = midnight.getTime() - Date.now();
+
+  status.textContent = "Will prepare your morning after midnight\u2026";
+  pregenDelayTimeout = setTimeout(() => {
+    pregenDelayTimeout = null;
+    pregenerate();
+  }, delay);
 }
 
 async function pregenerate() {
