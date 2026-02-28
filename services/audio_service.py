@@ -22,8 +22,8 @@ AUDIO_FORMAT = "mp3_44100_128"
 SFX_DURATION = 2.0
 INLINE_SFX_VOLUME_DB = -50
 MUSIC_PROMPT = "calm ambient spa music, soft piano and gentle pads, peaceful and meditative"
-MUSIC_TARGET_DBFS = -60
-WEATHER_AMBIENCE_TARGET_DBFS = -60
+MUSIC_TARGET_DBFS = -45
+WEATHER_AMBIENCE_TARGET_DBFS = -45
 
 _SPRING_BASE = "birds chirping softly in a garden, gentle morning breeze through leaves"
 
