@@ -2,10 +2,16 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
+from datetime import date
 from pathlib import Path
 
 import httpx
 from dotenv import load_dotenv
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -128,8 +134,17 @@ async def google_connect():
         raise HTTPException(status_code=500, detail=str(exc))
 
 
+_daily_cache: dict[str, dict] = {}
+
+
 @app.get("/generate-morning")
 async def generate_morning():
+    today = date.today().isoformat()
+
+    if today in _daily_cache:
+        logger.info("Serving cached morning for %s", today)
+        return _daily_cache[today]
+
     try:
         settings = _load_settings()
         loc = settings.get("location", DEFAULT_SETTINGS["location"])
@@ -142,14 +157,26 @@ async def generate_morning():
         script = await generate_script(weather, events)
         audio_path = await generate_audio(script, weather.description)
 
-        filename = audio_path.name
-        return {
+        result = {
             "script": script,
-            "audio_url": f"/static/audio/{filename}",
+            "audio_url": f"/static/audio/{audio_path.name}",
         }
+
+        _daily_cache.clear()
+        _daily_cache[today] = result
+        logger.info("Generated and cached morning for %s", today)
+
+        return result
 
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/api/cache/clear")
+async def clear_cache():
+    _daily_cache.clear()
+    logger.info("Daily cache cleared manually")
+    return {"ok": True}
 
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
