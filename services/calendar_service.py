@@ -10,7 +10,11 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
+SCOPES = [
+    "https://www.googleapis.com/auth/calendar.readonly",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "openid",
+]
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 CREDENTIALS_FILE = BASE_DIR / "credentials.json"
@@ -90,3 +94,37 @@ def fetch_todays_events_safe() -> list[CalendarEvent]:
         return fetch_todays_events()
     except Exception:
         return []
+
+
+def get_connected_account() -> dict:
+    """Return info about the connected Google account, or empty if not connected."""
+    if not TOKEN_FILE.exists():
+        return {"connected": False, "email": None}
+    try:
+        creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), SCOPES)
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        service = build("oauth2", "v2", credentials=creds)
+        user_info = service.userinfo().get().execute()
+        return {"connected": True, "email": user_info.get("email", "Unknown")}
+    except Exception:
+        return {"connected": True, "email": "(saved but could not fetch email)"}
+
+
+def disconnect_account() -> None:
+    """Remove the stored OAuth token."""
+    if TOKEN_FILE.exists():
+        TOKEN_FILE.unlink()
+
+
+def reconnect_account() -> str:
+    """Force a fresh OAuth flow and return the connected email."""
+    disconnect_account()
+    creds = _get_credentials()
+    TOKEN_FILE.write_text(creds.to_json())
+    try:
+        service = build("oauth2", "v2", credentials=creds)
+        user_info = service.userinfo().get().execute()
+        return user_info.get("email", "Unknown")
+    except Exception:
+        return "(connected but could not fetch email)"

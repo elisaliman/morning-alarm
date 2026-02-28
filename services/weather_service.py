@@ -34,10 +34,10 @@ class WeatherReport:
         )
 
 
-async def fetch_weather() -> WeatherReport:
+async def fetch_weather(lat: str | None = None, lon: str | None = None) -> WeatherReport:
     """Fetch current weather from Open-Meteo (free, no API key needed)."""
-    lat = os.getenv("WEATHER_LAT", "40.7128")
-    lon = os.getenv("WEATHER_LON", "-74.0060")
+    lat = lat or os.getenv("WEATHER_LAT", "40.7128")
+    lon = lon or os.getenv("WEATHER_LON", "-74.0060")
 
     params = {
         "latitude": lat,
