@@ -7,3 +7,4 @@ google-auth-oauthlib
 google-genai
 elevenlabs
 pydub
+audioop-lts
