@@ -1,24 +1,21 @@
-# Morning Alarm
+# Daybreak - Morning Brief Alarm
 
 A personalized morning alarm that generates a spoken briefing with your weather and calendar events, backed by ambient music and nature sounds.
 
-Set an alarm time, and the app pre-generates a ~30-second audio clip using your Google Calendar, local weather, and AI — so when the alarm fires, it plays instantly.
+Set an alarm time, and the app pre-generates a ~30-second audio clip using your Google Calendar, local weather, and AI.
 
-<!-- Uncomment and add screenshots:
-![Default view](screenshots/default.png)
-![Playing](screenshots/playing.png)
--->
+
+![Default view](./screenshots/default.png)
+
+![Playing](./screenshots/playing.png)
 
 ## How it works
 
 1. **Set an alarm** via the scroll-wheel time picker
 2. The app immediately fetches your **Google Calendar** events and **local weather**
-3. **Google Gemini** writes a calm, natural morning script mentioning your schedule and conditions
+3. **Google Gemini** writes a natural morning script informing you on your schedule and weather conditions
 4. **ElevenLabs** generates text-to-speech audio plus nature sound effects
 5. Everything is mixed with ambient music and weather-appropriate backing sounds (birds, rain, etc.)
-6. When the alarm fires, the audio plays instantly from cache
-
-The result is cached for the day — subsequent alarms reuse the same audio without extra API calls.
 
 ## Setup
 
