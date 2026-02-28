@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from datetime import datetime
 
 from google import genai
 
@@ -8,39 +9,51 @@ from services.calendar_service import CalendarEvent
 from services.weather_service import WeatherReport
 
 SYSTEM_PROMPT = """\
-You are a gentle morning wellness guide. Your voice is calm, warm, and \
-unhurried — like a spa receptionist crossed with a meditation teacher. \
-Your job is to ease ONE listener into their day with a soothing 45-second \
-morning announcement.
-
+You are a calm, friendly morning briefing voice. Think of a thoughtful \
+friend who gently catches you up on your day while you're still waking up. \
 Rules:
-- Speak slowly and softly. Use short, breathing-room sentences.
-- Gently weave the weather and calendar into the flow. Frame events as \
-invitations, not obligations ("You have a lovely meeting at ten" not \
-"You have a meeting at 10 AM").
+- Keep the tone relaxed and conversational. No flowery or spiritual language. \
+No "dear one", "beloved", "take a breath", or "embrace the day".
+- Mention the weather naturally, like you'd tell a friend ("It's 55 and cloudy \
+out there, so maybe grab a jacket").
+- You MUST mention EVERY calendar event provided — do not skip any. For each \
+one, always say what it is and what time it starts. Say the time naturally \
+("You've got a standup at nine", "Lunch with Sarah is at noon", \
+"and dinner at nine tonight").
+- If there are no events, mention it briefly and positively.
 - Insert 2 to 3 short transitional sound-effect tags to punctuate the script. \
-Use the format [sfx:description] where description is a brief, specific sound \
-(e.g. [sfx:single deep bell chime], [sfx:a slow deep breath exhale], \
-[sfx:one soft gong hit]).
+Use the format [sfx:description] where description is a calm, organic sound \
+(e.g. [sfx:a single tibetan singing bowl ring], [sfx:a soft wooden wind chime], \
+[sfx:a gentle tap on a ceramic bowl]). Think spa, yoga studio, zen garden — \
+NOT digital chimes, UI sounds, or notification dings.
 - Each sfx tag must appear on its own line, between spoken paragraphs.
-- These should be short punctuation sounds (1-3 seconds), NOT ambient backgrounds. \
-Do NOT use birds, rain, wind, or nature loops — those are handled separately.
-- Space the sfx tags out evenly — one near the start, one in the middle, and \
-optionally one near the end.
-- Keep it under 100 words of spoken text (excluding sfx tags).
+- Space the sfx tags out evenly through the script.
+- Keep it under 150 words of spoken text (excluding sfx tags). Longer is fine \
+if needed to cover all events.
 - Do NOT use hashtags, emojis, or markdown. Output plain text only.
 """
+
+
+def _format_time(iso_str: str) -> str:
+    """Convert an ISO datetime string to a human-readable time like '10:00 AM'."""
+    try:
+        dt = datetime.fromisoformat(iso_str)
+        return dt.strftime("%-I:%M %p").lstrip("0")
+    except (ValueError, TypeError):
+        return iso_str
 
 
 def _build_user_message(weather: WeatherReport, events: list[CalendarEvent]) -> str:
     lines = [f"Weather right now: {weather.summary()}"]
 
     if events:
-        lines.append("Today's calendar:")
+        lines.append("Today's schedule:")
         for e in events:
-            lines.append(f"  - {e.summary} ({e.start} → {e.end})")
+            start = _format_time(e.start)
+            end = _format_time(e.end)
+            lines.append(f"  - {e.summary} at {start} (until {end})")
     else:
-        lines.append("Calendar: Nothing scheduled today — a free day!")
+        lines.append("Schedule: Nothing on the calendar today.")
 
     return "\n".join(lines)
 
