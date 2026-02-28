@@ -9,6 +9,8 @@ Set an alarm time, and the app pre-generates a ~30-second audio clip using your 
 
 ![Playing](./screenshots/playing.png)
 
+![Script](./screenshots/script.png)
+
 ## How it works
 
 1. **Set an alarm** via the scroll-wheel time picker
