@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Morning Alarm</title>
+  <title>Daybreak</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-family: 'Neue Haas Grotesk Display', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-weight: 200;
       background: linear-gradient(145deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
       background-attachment: fixed;
     }
@@ -227,8 +228,8 @@
 
   <!-- Main content -->
   <div class="text-center px-6 max-w-lg">
-    <div id="clock" class="text-6xl sm:text-7xl font-extralight text-white/90 tabular-nums mb-2"></div>
-    <p id="greeting" class="text-indigo-300/60 text-sm mb-12"></p>
+    <div id="clock" class="text-8xl sm:text-9xl font-extralight text-white/90 tabular-nums mb-2"></div>
+    <p id="greeting" class="text-indigo-300/60 text-lg mb-12"></p>
 
     <!-- Orb -->
     <div class="relative inline-block mb-6">
@@ -236,7 +237,7 @@
       <button
         id="btn-orb"
         onclick="handleOrbClick()"
-        class="orb-gradient relative w-36 h-36 rounded-full text-white font-medium shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center"
+        class="orb-gradient relative w-36 h-36 rounded-full text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center"
       >
         <div class="orb-gradient-inner"></div>
         <span id="orb-label" class="relative z-10 text-lg leading-tight drop-shadow-md">Set Alarm</span>
