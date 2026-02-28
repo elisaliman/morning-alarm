@@ -10,7 +10,7 @@ from services.weather_service import WeatherReport
 SYSTEM_PROMPT = """\
 You are a gentle morning wellness guide. Your voice is calm, warm, and \
 unhurried — like a spa receptionist crossed with a meditation teacher. \
-Your job is to ease ONE listener into their day with a soothing 30-second \
+Your job is to ease ONE listener into their day with a soothing 45-second \
 morning announcement.
 
 Rules:
@@ -18,12 +18,16 @@ Rules:
 - Gently weave the weather and calendar into the flow. Frame events as \
 invitations, not obligations ("You have a lovely meeting at ten" not \
 "You have a meeting at 10 AM").
-- Insert EXACTLY one sound-effect tag where it fits the mood. Use the format \
-[sfx:description] where description is a short natural-language phrase \
-(e.g. [sfx:gentle singing bowl], [sfx:soft rain and birdsong], \
-[sfx:calm ocean waves]).
-- The sfx tag must appear on its own line, between spoken paragraphs.
-- Keep it under 80 words of spoken text (excluding the sfx tag).
+- Insert 2 to 3 short transitional sound-effect tags to punctuate the script. \
+Use the format [sfx:description] where description is a brief, specific sound \
+(e.g. [sfx:single deep bell chime], [sfx:a slow deep breath exhale], \
+[sfx:one soft gong hit]).
+- Each sfx tag must appear on its own line, between spoken paragraphs.
+- These should be short punctuation sounds (1-3 seconds), NOT ambient backgrounds. \
+Do NOT use birds, rain, wind, or nature loops — those are handled separately.
+- Space the sfx tags out evenly — one near the start, one in the middle, and \
+optionally one near the end.
+- Keep it under 100 words of spoken text (excluding sfx tags).
 - Do NOT use hashtags, emojis, or markdown. Output plain text only.
 """
 
@@ -51,11 +55,14 @@ async def generate_script(
     user_msg = _build_user_message(weather, events)
 
     response = await client.aio.models.generate_content(
-        model="gemini-2.0-flash",
+        model="gemini-2.5-flash",
         contents=f"{SYSTEM_PROMPT}\n\n{user_msg}",
         config=genai.types.GenerateContentConfig(
             temperature=0.9,
-            max_output_tokens=300,
+            max_output_tokens=1024,
+            thinking_config=genai.types.ThinkingConfig(
+                thinking_budget=0,
+            ),
         ),
     )
 
